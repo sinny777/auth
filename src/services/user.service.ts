@@ -4,7 +4,7 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {UserIdentityService} from '@loopback/authentication';
-import {repository} from '@loopback/repository';
+import {Filter, repository, Where} from '@loopback/repository';
 import {Profile as PassportProfile} from 'passport';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
@@ -113,5 +113,35 @@ export class PassportUserIdentityService
       },
       created: new Date(),
     });
+  }
+
+  async find(filter?: Filter<User>): Promise<any> {
+    console.log('IN UserService.find: >>>> ', filter);
+    return this.userRepository.find(filter);
+  }
+
+  async updateAll(user: User, where?: Where<User>): Promise<any> {
+    console.log('IN UserService.updateAll: >>>> ', user);
+    return this.userRepository.updateAll(user, where);
+  }
+
+  async findById(id: string, filter?: Filter<User>): Promise<any> {
+    console.log('IN UserService.findById: >>>> ', id, ', filter: ', filter);
+    return this.userRepository.findById(id, filter);
+  }
+
+  async updateById(id: string, user: User): Promise<any> {
+    console.log('IN UserService.updateById: >>>> ', id, ', user: ', user);
+    return this.userRepository.updateById(id, user);
+  }
+
+  async replaceById(id: string, user: User): Promise<any> {
+    console.log('IN UserService.replaceById: >>>> ', id, ', user: ', user);
+    return this.userRepository.replaceById(id, user);
+  }
+
+  async deleteById(id: string): Promise<any> {
+    console.log('IN UserService.deleteById: >>>> ', id);
+    return this.userRepository.deleteById(id);
   }
 }

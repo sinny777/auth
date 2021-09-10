@@ -44,9 +44,6 @@ export function setupBindings(app: Application) {
   passport.deserializeUser(function (user: any, done) {
     done(null, user);
   });
-  app
-    .bind(UserServiceBindings.PASSPORT_USER_IDENTITY_SERVICE)
-    .toClass(PassportUserIdentityService);
 
   // passport strategies
   const passportStrategies: Record<string, Constructor<unknown>> = {
@@ -93,6 +90,9 @@ export function setupBindings(app: Application) {
   app.bind('passport-oauth2').toProvider(CustomOauth2Interceptor);
   app.bind('set-session-user').toProvider(SessionAuth);
 
+  app
+    .bind(UserServiceBindings.PASSPORT_USER_IDENTITY_SERVICE)
+    .toClass(PassportUserIdentityService);
 
   app.bind(PasswordHasherBindings.PASSWORD_HASHER).toClass(BcryptHasher);
   app.bind(PasswordHasherBindings.ROUNDS).to(10)

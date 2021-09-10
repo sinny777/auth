@@ -1,19 +1,19 @@
 // Copyright IBM Corp. 2020. All Rights Reserved.
-// Node module: @loopback/example-passport-login
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {
-  get,
-  RestBindings,
-  Response,
-  RequestWithSession,
-  param,
-} from '@loopback/rest';
 import {authenticate, AuthenticationBindings} from '@loopback/authentication';
 import {inject} from '@loopback/core';
+import {
+  get,
+
+
+
+  param, RequestWithSession, Response, RestBindings
+} from '@loopback/rest';
 import {SecurityBindings, UserProfile} from '@loopback/security';
 import {oAuth2InterceptExpressMiddleware} from '../authentication-interceptors/types';
+import {JWTService, TokenServiceBindings} from '../services';
 
 /**
  * Login controller for third party oauth provider
@@ -24,7 +24,9 @@ import {oAuth2InterceptExpressMiddleware} from '../authentication-interceptors/t
  * The method thirdPartyCallBack uses the passport strategies as express middleware
  */
 export class Oauth2Controller {
-  constructor() {}
+  constructor(
+    @inject(TokenServiceBindings.TOKEN_SERVICE) public jwtService: JWTService,
+  ) { }
 
   @authenticate('oauth2')
   @get('/auth/thirdparty/{provider}')
@@ -36,6 +38,7 @@ export class Oauth2Controller {
    */
   loginToThirdParty(
     @param.path.string('provider') provider: string,
+    @param.query.string('urlAfterLogin') urlAfterLogin: string,
     @inject(AuthenticationBindings.AUTHENTICATION_REDIRECT_URL)
     redirectUrl: string,
     @inject(AuthenticationBindings.AUTHENTICATION_REDIRECT_STATUS)
@@ -45,6 +48,7 @@ export class Oauth2Controller {
   ) {
     response.statusCode = status || 302;
     response.setHeader('Location', redirectUrl);
+    // response.setHeader('urlAfterLogin', urlAfterLogin);
     response.end();
     return response;
   }
@@ -64,10 +68,16 @@ export class Oauth2Controller {
     @inject(RestBindings.Http.REQUEST) request: RequestWithSession,
     @inject(RestBindings.Http.RESPONSE) response: Response,
   ) {
+
+    console.log("USER : >> ", user);
+    const token = await this.jwtService.generateToken(user.profile);
+    console.log("TOKEN : >> ", token);
     const profile = {
       ...user.profile,
+      token: token
     };
     request.session.user = profile;
+    console.log('urlAfterLogin: >> ', request.headers.referer);
     response.redirect('/auth/account');
     return response;
   }

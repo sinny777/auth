@@ -1,12 +1,13 @@
 import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {
+  api,
   get, Request,
   RequestBodyObject, response,
   ResponseObject, RestBindings
 } from '@loopback/rest';
-import {SecurityBindings, UserProfile} from '@loopback/security';
-
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {PassportUserIdentityService, UserServiceBindings} from '../services';
 
 /**
  * OpenAPI response for ping()
@@ -50,11 +51,12 @@ const USER_PROFILE_RESPONSE: RequestBodyObject = {
   },
 };
 
-/**
- * A simple controller to bounce back http requests
- */
+@api({basePath: '/accounts', paths: {}})
 export class AccountsController {
-  constructor(@inject(RestBindings.Http.REQUEST) private req: Request) { }
+  constructor(
+    @inject(RestBindings.Http.REQUEST) private req: Request,
+    @inject(UserServiceBindings.PASSPORT_USER_IDENTITY_SERVICE) private userService: PassportUserIdentityService,
+  ) { }
 
   // Map to `GET /ping`
   @get('/ping')
@@ -82,11 +84,11 @@ export class AccountsController {
   }
 
   @authenticate('basic')
-  @get('/me', {
+  @get('/basic', {
     responses: USER_PROFILE_RESPONSE,
   })
-  myInfo(@inject(SecurityBindings.USER) user: UserProfile): object {
-    console.log('IN AccountsController.myInfo: >> ');
+  myInfoUsingBasicAuth(@inject(SecurityBindings.USER) user: UserProfile): object {
+    console.log('IN AccountsController.myInfoUsingBasicAuth: >> ');
     return {
       user: user.profile,
       headers: Object.assign({}, this.req.headers),
@@ -94,16 +96,34 @@ export class AccountsController {
   }
 
   @authenticate('jwt')
-  @get('/users/me', {
+  @get('/me', {
     responses: USER_PROFILE_RESPONSE,
   })
-  myInfoFromToken(@inject(SecurityBindings.USER) user: UserProfile): Promise<UserProfile> {
-    console.log('IN AccountsController.myInfoFromToken: >> ', user);
-    // return {
-    //   user: user.profile,
-    //   headers: Object.assign({}, this.req.headers),
-    // };
-    return Promise.resolve(user);
+  async myInfoUsingToken(@inject(SecurityBindings.USER) user: UserProfile): Promise<UserProfile> {
+    console.log('IN AccountsController.myInfoUsingToken: >> ', user);
+    const userDetails = await this.userService.findById(
+      user[securityId],
+      {
+        include: ['profiles'],
+      },
+    );
+    // console.log('userDetails: >> ', userDetails);
+    return Promise.resolve(userDetails);
+  }
+
+  @authenticate('jwt')
+  @get('/profiles')
+  async getExternalProfiles(
+    @inject(SecurityBindings.USER) profile: UserProfile,
+  ): Promise<UserProfile> {
+    const user = await this.userService.findById(
+      profile[securityId],
+      {
+        include: ['profiles'],
+      },
+    );
+    // console.log('USER: >> ', user);
+    return Promise.resolve(user.profiles);
   }
 
 

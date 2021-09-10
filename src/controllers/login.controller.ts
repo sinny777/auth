@@ -8,7 +8,7 @@ import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {
   del,
-  get,
+
   HttpErrors,
   post,
   requestBody,
@@ -17,7 +17,7 @@ import {
   RestBindings,
   SchemaObject
 } from '@loopback/rest';
-import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {SecurityBindings, UserProfile} from '@loopback/security';
 import {Credentials} from '../models';
 import {UserRepository} from '../repositories';
 import {UserCredentialsRepository} from '../repositories/user-credentials.repository';
@@ -133,17 +133,5 @@ export class UserLoginController {
     await this.userRepository.deleteAll();
   }
 
-  @authenticate('basic')
-  @get('/profiles')
-  async getExternalProfiles(
-    @inject(SecurityBindings.USER) profile: UserProfile,
-  ) {
-    const user = await this.userRepository.findById(
-      profile[securityId],
-      {
-        include: ['profiles'],
-      },
-    );
-    return user.profiles;
-  }
+
 }
