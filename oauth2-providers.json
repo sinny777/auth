@@ -1,0 +1,69 @@
+{
+    "local": {
+        "provider": "local",
+        "module": "passport-local",
+        "usernameField": "username",
+        "passwordField": "password",
+        "authPath": "/auth/local",
+        "successRedirect": "/auth/account",
+        "failureRedirect": "/local",
+        "failureFlash": true,
+        "setAccessToken": true,
+        "session": true,
+        "forceDefaultCallback": true
+    },
+    "google-login": {
+        "provider": "google",
+        "module": "passport-google-oauth2",
+        "strategy": "OAuth2Strategy",
+        "clientID": "874807563899-fshkhsb24gpkcikf12jg7anv9ijuar16.apps.googleusercontent.com",
+        "clientSecret": "MCuWM9_3tXFRf6oP0yHtWt0u",
+        "callbackURL": "/api/auth/thirdparty/google/callback",
+        "authPath": "/api/auth/thirdparty/google",
+        "callbackPath": "/api/auth/thirdparty/google/callback",
+        "successRedirect": "/auth/account",
+        "failureRedirect": "/login",
+        "scope": [
+            "email",
+            "profile"
+        ],
+        "failureFlash": true
+    },
+    "twitter-login": {
+        "provider": "twitter",
+        "module": "passport-twitter",
+        "strategy": "OAuth2Strategy",
+        "consumerKey": "{twitter-consumer-key}",
+        "consumerSecret": "{twitter-consumer-secret}",
+        "callbackURL": "/api/auth/thirdparty/twitter/callback?source=twitter",
+        "authPath": "/api/auth/thirdparty/twitter",
+        "callbackPath": "/api/auth/thirdparty/twitter/callback",
+        "successRedirect": "/auth/account",
+        "failureRedirect": "/login",
+        "includeEmail": true,
+        "scope": [
+            "email",
+            "profile"
+        ],
+        "failureFlash": true
+    },
+    "oauth2": {
+        "provider": "oauth2",
+        "module": "passport-oauth2",
+        "strategy": "OAuth2Strategy",
+        "authPath": "/api/auth/thirdparty/oauth2",
+        "callbackPath": "/api/auth/thirdparty/oauth2/callback",
+        "successRedirect": "/auth/account",
+        "failureRedirect": "/login",
+        "scope": [
+            "email",
+            "profile"
+        ],
+        "failureFlash": true,
+        "clientID": "1111",
+        "clientSecret": "app1_secret",
+        "callbackURL": "http://localhost:3000/api/auth/thirdparty/oauth2/callback",
+        "authorizationURL": "http://localhost:9000/oauth/dialog",
+        "tokenURL": "http://localhost:9000/oauth/token"
+    }
+}

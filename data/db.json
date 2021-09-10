@@ -1,0 +1,16 @@
+{
+  "ids": {
+    "User": 2,
+    "UserCredentials": 2,
+    "UserIdentity": 1
+  },
+  "models": {
+    "User": {
+      "de0a7d8d-fbaf-4c84-9d12-2941b67f1431": "{\"id\":\"de0a7d8d-fbaf-4c84-9d12-2941b67f1431\",\"name\":\"Gurvinder Singh\",\"username\":\"user1@smartthings.com\",\"email\":\"user1@smartthings.com\"}"
+    },
+    "UserCredentials": {
+      "user1@smartthings.com": "{\"id\":\"user1@smartthings.com\",\"password\":\"$2a$10$fgLJ38mUVwq//3lSbvGkGuEqYxyxZGpA5RorslwRZk2zzJYmj/Pwy\",\"userId\":\"de0a7d8d-fbaf-4c84-9d12-2941b67f1431\"}"
+    },
+    "UserIdentity": {}
+  }
+}
