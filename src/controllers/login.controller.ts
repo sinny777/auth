@@ -1,5 +1,4 @@
 // Copyright IBM Corp. 2020. All Rights Reserved.
-// Node module: @loopback/example-passport-login
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
@@ -7,22 +6,25 @@ import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {
+  api,
   del,
-
+  get,
   HttpErrors,
-  post,
+  param,
+  post, Request,
   requestBody,
+  RequestBodyObject,
   RequestWithSession,
   Response,
   RestBindings,
   SchemaObject
 } from '@loopback/rest';
-import {SecurityBindings, UserProfile} from '@loopback/security';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {Credentials} from '../models';
 import {UserRepository} from '../repositories';
 import {UserCredentialsRepository} from '../repositories/user-credentials.repository';
 import {UserIdentityRepository} from '../repositories/user-identity.repository';
-import {BcryptHasher, JWTService, PasswordHasherBindings, TokenServiceBindings} from '../services';
+import {BcryptHasher, JWTService, PassportUserIdentityService, PasswordHasherBindings, TokenServiceBindings, UserServiceBindings} from '../services';
 
 const CredentialsSchema: SchemaObject = {
   type: 'object',
@@ -39,6 +41,22 @@ const CredentialsSchema: SchemaObject = {
   },
 };
 
+const USER_PROFILE_RESPONSE: RequestBodyObject = {
+  description: 'Session user profile',
+  content: {
+    'application/json': {
+      schema: {
+        type: 'object',
+        title: 'sessionUserProfile',
+        properties: {
+          user: {type: 'object'},
+        },
+      },
+    },
+  },
+};
+
+@api({basePath: '/auth', paths: {}})
 export class UserLoginController {
   constructor(
     @repository(UserRepository)
@@ -51,6 +69,8 @@ export class UserLoginController {
     public hasher: BcryptHasher,
     @inject(TokenServiceBindings.TOKEN_SERVICE)
     public jwtService: JWTService,
+    @inject(RestBindings.Http.REQUEST) private req: Request,
+    @inject(UserServiceBindings.PASSPORT_USER_IDENTITY_SERVICE) private userService: PassportUserIdentityService,
   ) { }
 
   @post('/signup')
@@ -122,6 +142,69 @@ export class UserLoginController {
     return token;
   }
 
+  @get('/keys')
+  async fetchAuthKeys(
+    @inject(TokenServiceBindings.JWT_PUBLIC_KEY) jwtPublicKey: string
+  ): Promise<string> {
+    const decodeKey = jwtPublicKey.replace(/\\n/gm, '\n');
+    return Promise.resolve(decodeKey);
+  }
+
+  @authenticate('session')
+  @get('/whoAmI', {
+    responses: USER_PROFILE_RESPONSE,
+  })
+  whoAmI(@inject(SecurityBindings.USER) user: UserProfile): object {
+    console.log('IN AccountsController.whoAmI: >> ');
+    return {
+      user: user.profile,
+      headers: Object.assign({}, this.req.headers),
+    };
+  }
+
+  @authenticate('basic')
+  @get('/basic', {
+    responses: USER_PROFILE_RESPONSE,
+  })
+  myInfoUsingBasicAuth(@inject(SecurityBindings.USER) user: UserProfile): object {
+    console.log('IN AccountsController.myInfoUsingBasicAuth: >> ');
+    return {
+      user: user.profile,
+      headers: Object.assign({}, this.req.headers),
+    };
+  }
+
+  @authenticate('jwt')
+  @get('/me', {
+    responses: USER_PROFILE_RESPONSE,
+  })
+  async myInfoUsingToken(@inject(SecurityBindings.USER) user: UserProfile): Promise<UserProfile> {
+    console.log('IN AccountsController.myInfoUsingToken: >> ', user);
+    const userDetails = await this.userService.findById(
+      user[securityId],
+      {
+        include: ['profiles'],
+      },
+    );
+    // console.log('userDetails: >> ', userDetails);
+    return Promise.resolve(userDetails);
+  }
+
+  @authenticate('jwt')
+  @get('/profiles')
+  async getExternalProfiles(
+    @inject(SecurityBindings.USER) profile: UserProfile,
+  ): Promise<UserProfile> {
+    const user = await this.userService.findById(
+      profile[securityId],
+      {
+        include: ['profiles'],
+      },
+    );
+    // console.log('USER: >> ', user);
+    return Promise.resolve(user.profiles);
+  }
+
   /**
    * TODO: enable roles and authorization, add admin role authorization to this endpoint
    */
@@ -131,6 +214,17 @@ export class UserLoginController {
     await this.userCredentialsRepository.deleteAll();
     await this.userIdentityRepository.deleteAll();
     await this.userRepository.deleteAll();
+  }
+
+  @authenticate('jwt')
+  @get('/{accountId}/exchange')
+  async exchangeToken(
+    @inject(SecurityBindings.USER) user: UserProfile,
+    @param.path.string('accountId') accountId: string,
+  ): Promise<string> {
+    user.accountId = accountId;
+    const newToken = this.jwtService.generateToken(user);
+    return Promise.resolve(newToken);
   }
 
 

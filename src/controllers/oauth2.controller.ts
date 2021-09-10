@@ -5,6 +5,7 @@
 import {authenticate, AuthenticationBindings} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {
+  api,
   get,
 
 
@@ -23,13 +24,14 @@ import {JWTService, TokenServiceBindings} from '../services';
  * The method loginToThirdParty uses the @authenticate decorator to plugin passport strategies independently
  * The method thirdPartyCallBack uses the passport strategies as express middleware
  */
+@api({basePath: '/auth/thirdparty', paths: {}})
 export class Oauth2Controller {
   constructor(
     @inject(TokenServiceBindings.TOKEN_SERVICE) public jwtService: JWTService,
   ) { }
 
   @authenticate('oauth2')
-  @get('/auth/thirdparty/{provider}')
+  @get('/{provider}')
   /**
    * This method uses the @authenticate decorator to plugin passport strategies independently
    *
@@ -54,7 +56,7 @@ export class Oauth2Controller {
   }
 
   @oAuth2InterceptExpressMiddleware()
-  @get('/auth/thirdparty/{provider}/callback')
+  @get('/{provider}/callback')
   /**
    * This method uses the passport strategies as express middleware
    *

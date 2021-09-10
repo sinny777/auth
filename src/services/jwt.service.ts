@@ -84,6 +84,12 @@ export class JWTService {
         {[securityId]: '', id: '', name: ''},
         {[securityId]: decryptedToken.id, id: decryptedToken.id, name: decryptedToken.name, email: decryptedToken.email}
       );
+
+      console.log('accountId: >> ', decryptedToken['accountId']);
+      if (decryptedToken['accountId']) {
+        userProfile.accountId = decryptedToken['accountId'];
+      }
+
     }
     catch (err) {
       throw new HttpErrors.Unauthorized(`Error verifying token:${err.message}`)
