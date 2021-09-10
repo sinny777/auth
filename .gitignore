@@ -60,3 +60,5 @@ typings/
 **/keys/secrets
 
 .vscode
+
+**/data/
