@@ -100,6 +100,7 @@ export class UserLoginController {
         email: credentials.email,
         username: credentials.email,
         name: credentials.name,
+        tenantId: credentials.tenantId
       });
       userCredentials = await this.userCredentialsRepository.create({
         id: credentials.email,

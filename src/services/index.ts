@@ -2,6 +2,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
+export * from './common.service';
 export * from './hash.password';
 export * from './jwt.service';
 export * from './keys';

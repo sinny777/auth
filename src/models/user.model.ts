@@ -1,5 +1,4 @@
 // Copyright IBM Corp. 2020. All Rights Reserved.
-// Node module: @loopback/example-passport-login
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
@@ -24,8 +23,9 @@ export class User extends Entity {
 
   @property({
     type: 'string',
+    required: true
   })
-  realm?: string;
+  tenantId?: string;
 
   // must keep it
   @property({

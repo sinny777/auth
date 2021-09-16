@@ -1,0 +1,17 @@
+{
+  "users": [
+    {}
+  ],
+  "accounts": [
+    {
+      "name": "Default",
+      "accountId": "abcd-12345-efgh-56789",
+      "roles": [
+        {
+          "key": "admin",
+          "permissions": []
+        }
+      ]
+    }
+  ]
+}

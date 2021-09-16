@@ -29,7 +29,7 @@ export class UserRepository extends DefaultCrudRepository<
   >;
 
   constructor(
-    @inject('datasources.db') dataSource: DbDataSource,
+    @inject('datasources.pgdb') dataSource: DbDataSource,
     @repository.getter('UserIdentityRepository')
     protected profilesGetter: Getter<UserIdentityRepository>,
     @repository.getter('UserCredentialsRepository')

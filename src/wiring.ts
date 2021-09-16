@@ -90,6 +90,8 @@ export function setupBindings(app: Application) {
   app.bind('passport-oauth2').toProvider(CustomOauth2Interceptor);
   app.bind('set-session-user').toProvider(SessionAuth);
 
+  // app.service(UuidProvider, 'uuid');
+
   app
     .bind(UserServiceBindings.PASSPORT_USER_IDENTITY_SERVICE)
     .toClass(PassportUserIdentityService);
