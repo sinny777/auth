@@ -3,26 +3,28 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {Entity, hasMany, model, property} from '@loopback/repository';
+import shortUUID from 'short-uuid';
 import {Role} from './role.model';
+import {AccountType} from './types';
 
 @model()
 export class Account extends Entity {
   @property({
     type: 'string',
     id: true,
-    defaultFn: "uuid"
+    default: () => shortUUID().new(),
   })
   id: string;
 
-  // @property({
-  //   type: 'string',
-  //   required: true,
-  //   jsonSchema: {
-  //     enum: Object.values(AccountType),
-  //   },
-  //   default: AccountType.DEFAULT
-  // })
-  // type: AccountType;
+  @property({
+    type: 'string',
+    required: true,
+    jsonSchema: {
+      enum: Object.values(AccountType),
+    },
+    default: AccountType.DEFAULT
+  })
+  type: AccountType;
 
   @property({
     type: 'string',

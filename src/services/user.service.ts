@@ -1,14 +1,16 @@
 // Copyright IBM Corp. 2020. All Rights Reserved.
-// Node module: @loopback/example-passport-login
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
 import {UserIdentityService} from '@loopback/authentication';
+import {inject} from '@loopback/core';
 import {Filter, repository, Where} from '@loopback/repository';
 import {Profile as PassportProfile} from 'passport';
+import {LoggerBindings} from '.';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
 import {UserIdentityRepository} from '../repositories/user-identity.repository';
+import {LoggerService} from './logger.service';
 
 /**
  * User service to accept a 'passport' user profile and save it locally
@@ -16,6 +18,10 @@ import {UserIdentityRepository} from '../repositories/user-identity.repository';
 export class PassportUserIdentityService
   implements UserIdentityService<PassportProfile, User>
 {
+
+  @inject(LoggerBindings.LOGGER)
+  private loggerService: LoggerService;
+
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
@@ -88,7 +94,7 @@ export class PassportUserIdentityService
         created: new Date(),
       });
     }
-    if (!userId) console.log('user id is empty');
+    if (!userId) this.loggerService.logger.info('user id is empty');
     return this.userRepository.findById(userId, {
       include: ['profiles'],
     });
@@ -116,32 +122,32 @@ export class PassportUserIdentityService
   }
 
   async find(filter?: Filter<User>): Promise<any> {
-    console.log('IN UserService.find: >>>> ', filter);
+    this.loggerService.logger.info('IN UserService.find: >>>> %o', filter);
     return this.userRepository.find(filter);
   }
 
   async updateAll(user: User, where?: Where<User>): Promise<any> {
-    console.log('IN UserService.updateAll: >>>> ', user);
+    this.loggerService.logger.info('IN UserService.updateAll: >>>> %o', user);
     return this.userRepository.updateAll(user, where);
   }
 
   async findById(id: string, filter?: Filter<User>): Promise<any> {
-    console.log('IN UserService.findById: >>>> ', id, ', filter: ', filter);
+    this.loggerService.logger.info('IN UserService.findById: >>>> %o %o %o', id, ', filter: ', filter);
     return this.userRepository.findById(id, filter);
   }
 
   async updateById(id: string, user: User): Promise<any> {
-    console.log('IN UserService.updateById: >>>> ', id, ', user: ', user);
+    this.loggerService.logger.info('IN UserService.updateById: >>>> ', id, ', user: ', user);
     return this.userRepository.updateById(id, user);
   }
 
   async replaceById(id: string, user: User): Promise<any> {
-    console.log('IN UserService.replaceById: >>>> ', id, ', user: ', user);
+    this.loggerService.logger.info('IN UserService.replaceById: >>>> ', id, ', user: ', user);
     return this.userRepository.replaceById(id, user);
   }
 
   async deleteById(id: string): Promise<any> {
-    console.log('IN UserService.deleteById: >>>> ', id);
+    this.loggerService.logger.info('IN UserService.deleteById: >>>> ', id);
     return this.userRepository.deleteById(id);
   }
 }

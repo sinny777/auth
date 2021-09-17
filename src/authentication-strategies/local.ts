@@ -11,7 +11,7 @@ import {securityId, UserProfile} from '@loopback/security';
 import {IVerifyOptions, Strategy} from 'passport-local';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
-import {BcryptHasher, PasswordHasherBindings} from '../services';
+import {BcryptHasher, PasswordHasherBindings, TokenServiceBindings} from '../services';
 
 @injectable(asAuthStrategy)
 export class LocalAuthStrategy implements AuthenticationStrategy {
@@ -26,7 +26,8 @@ export class LocalAuthStrategy implements AuthenticationStrategy {
     @repository(UserRepository)
     public userRepository: UserRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
-    public hasher: BcryptHasher
+    public hasher: BcryptHasher,
+    @inject(TokenServiceBindings.TENANT_ID) private tenantId: string
   ) {
     /**
      * create a local passport strategy with verify function to validate credentials
@@ -120,6 +121,7 @@ export class LocalAuthStrategy implements AuthenticationStrategy {
   mapProfile(user: User): UserProfile {
     const userProfile: UserProfile = {
       [securityId]: '' + user.id,
+      tenantId: this.tenantId,
       profile: {
         ...user,
       },

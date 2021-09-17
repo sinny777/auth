@@ -2,13 +2,17 @@ import {inject} from '@loopback/core';
 import {HttpErrors} from '@loopback/rest';
 import {securityId, UserProfile} from '@loopback/security';
 import {promisify} from 'util';
-import {TokenServiceBindings} from './keys';
+import {LoggerBindings, TokenServiceBindings} from './keys';
+import {LoggerService} from './logger.service';
 const jwt = require('jsonwebtoken');
 const signAsync = promisify(jwt.sign);
 const verifyAsync = promisify(jwt.verify);
 
 
 export class JWTService {
+
+  @inject(LoggerBindings.LOGGER)
+  private loggerService: LoggerService;
 
   constructor(
     @inject(TokenServiceBindings.TOKEN_SECRET)
@@ -24,7 +28,8 @@ export class JWTService {
     @inject(TokenServiceBindings.JWT_PRIVATE_KEY)
     private jwtPrivateKey: string,
     @inject(TokenServiceBindings.JWT_PUBLIC_KEY)
-    private jwtPublicKey: string
+    private jwtPublicKey: string,
+    @inject(TokenServiceBindings.TENANT_ID) private tenantId: string
   ) {
 
   }
@@ -37,7 +42,7 @@ export class JWTService {
     }
     let token = '';
     try {
-      // console.log('userProfile for JWT token: >> ', userProfile);
+      // this.loggerService.logger.info('userProfile for JWT token: >> ', userProfile);
       let signOptions = {
         issuer: this.jwtIssuer,
         // subject: this.jwtAudience,
@@ -46,7 +51,7 @@ export class JWTService {
         algorithm: this.jwtAlgorithm
       };
       // const filePath = path.join(__dirname, '../../src/config//keys/smarthings-auth-keys/private.pem');
-      // console.log('filePath: >> ', filePath);
+      // this.loggerService.logger.info('filePath: >> ', filePath);
       // const secret = fs.readFileSync(filePath, 'utf8');
       const privateKey = this.jwtPrivateKey ? this.jwtPrivateKey : this.tokenSecret;
       const secret = privateKey.replace(/\\n/gm, '\n');
@@ -79,16 +84,21 @@ export class JWTService {
       const publicKey = this.jwtPublicKey ? this.jwtPublicKey : this.tokenSecret;
       const decodeKey = publicKey.replace(/\\n/gm, '\n');
       const decryptedToken = await verifyAsync(token, decodeKey, verifyOptions);
-      console.log('decryptedToken: >> ', decryptedToken);
-      userProfile = Object.assign(
-        {[securityId]: '', id: '', name: ''},
-        {[securityId]: decryptedToken.id, id: decryptedToken.id, name: decryptedToken.name, email: decryptedToken.email}
-      );
+      // this.loggerService.logger.info('decryptedToken: >> %o', decryptedToken);
+      if (decryptedToken && decryptedToken.tenantId === this.tenantId) {
+        userProfile = Object.assign(
+          {[securityId]: '', id: '', name: ''},
+          {[securityId]: decryptedToken.id, id: decryptedToken.id, name: decryptedToken.name, email: decryptedToken.email, tenantId: decryptedToken.tenantId}
+        );
 
-      console.log('accountId: >> ', decryptedToken['accountId']);
-      if (decryptedToken['accountId']) {
-        userProfile.accountId = decryptedToken['accountId'];
+        // this.loggerService.logger.info('accountId: >> ', decryptedToken['accountId']);
+        if (decryptedToken['accountId']) {
+          userProfile.accountId = decryptedToken['accountId'];
+        }
+      } else {
+        throw new HttpErrors.BadRequest("Invalid Tenant ");
       }
+
 
     }
     catch (err) {

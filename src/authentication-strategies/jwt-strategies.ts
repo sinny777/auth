@@ -12,15 +12,13 @@ export class JWTStrategy implements AuthenticationStrategy {
   name: string = 'jwt';
   @inject(TokenServiceBindings.TOKEN_SERVICE)
   public jwtService: JWTService;
+  @inject(TokenServiceBindings.TENANT_ID) tenantId: string;
 
   async authenticate(request: Request<ParamsDictionary, any, any, ParsedQs>):
     Promise<UserProfile | RedirectRoute | undefined> {
-
     const token: string = this.extractCredentials(request);
     const userProfile = await this.jwtService.verifyToken(token);
-    console.log('userProfile: >> ', userProfile);
     return Promise.resolve(userProfile);
-
   }
 
   extractCredentials(request: Request<ParamsDictionary, any, any, ParsedQs>): string {

@@ -8,7 +8,7 @@ import {
   createBindingFromClass,
   Provider
 } from '@loopback/core';
-import {ExpressRequestHandler, toInterceptor} from '@loopback/rest';
+import {ExpressRequestHandler, RestBindings, toInterceptor} from '@loopback/rest';
 import passport from 'passport';
 import {
   CustomOauth2Interceptor,
@@ -33,9 +33,22 @@ import {
   TwitterOauth,
   TwitterOauthExpressMiddleware
 } from './authentication-strategy-providers';
-import {BcryptHasher, JWTService, PassportUserIdentityService, PasswordHasherBindings, TokenServiceBindings, UserServiceBindings} from './services';
+import {LogErrorProvider} from './providers/log-error.provider';
+import {BcryptHasher, JWTService, LoggerBindings, PassportUserIdentityService, PasswordHasherBindings, TokenServiceBindings, UserServiceBindings} from './services';
+import {WinstonLoggerService} from './services/logger.service';
+
 
 export function setupBindings(app: Application) {
+
+  // app.configure<LoggerOptions>(LoggingBindings.WINSTON_LOGGER).to({
+  //   level: 'info',
+  //   format: format.json(),
+  //   defaultMeta: {framework: 'LoopBack'},
+  // });
+
+  app.bind(LoggerBindings.LOGGER).toClass(WinstonLoggerService);
+  app.bind(RestBindings.SequenceActions.LOG_ERROR).toProvider(LogErrorProvider);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   passport.serializeUser(function (user: any, done) {
     done(null, user);
@@ -107,5 +120,7 @@ export function setupBindings(app: Application) {
   app.bind(TokenServiceBindings.TOKEN_EXPIRES_IN).to(process.env.TOKEN_EXPIRES_IN);
   app.bind(TokenServiceBindings.JWT_PRIVATE_KEY).to(process.env.JWT_PRIVATE_KEY);
   app.bind(TokenServiceBindings.JWT_PUBLIC_KEY).to(process.env.JWT_PUBLIC_KEY);
+
+  app.bind(TokenServiceBindings.TENANT_ID).to(process.env.TENANT_ID);
 
 }

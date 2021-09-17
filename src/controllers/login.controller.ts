@@ -4,6 +4,7 @@
 
 import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
+// import {LoggingBindings, WinstonLogger} from '@loopback/logging';
 import {repository} from '@loopback/repository';
 import {
   api,
@@ -14,9 +15,7 @@ import {
   post, Request,
   requestBody,
   RequestBodyObject,
-  RequestWithSession,
-  Response,
-  RestBindings,
+  RequestWithSession, RestBindings,
   SchemaObject
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
@@ -24,7 +23,9 @@ import {Credentials} from '../models';
 import {UserRepository} from '../repositories';
 import {UserCredentialsRepository} from '../repositories/user-credentials.repository';
 import {UserIdentityRepository} from '../repositories/user-identity.repository';
-import {BcryptHasher, JWTService, PassportUserIdentityService, PasswordHasherBindings, TokenServiceBindings, UserServiceBindings} from '../services';
+import {BcryptHasher, JWTService, LoggerBindings, PassportUserIdentityService, PasswordHasherBindings, TokenServiceBindings, UserServiceBindings} from '../services';
+import {LoggerService} from '../services/logger.service';
+
 
 const CredentialsSchema: SchemaObject = {
   type: 'object',
@@ -56,8 +57,12 @@ const USER_PROFILE_RESPONSE: RequestBodyObject = {
   },
 };
 
-@api({basePath: '/auth', paths: {}})
+@api({basePath: '/{tenantId}/auth/', paths: {}})
 export class UserLoginController {
+
+  @inject(LoggerBindings.LOGGER)
+  private loggerService: LoggerService;
+
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
@@ -83,7 +88,7 @@ export class UserLoginController {
       },
     })
     credentials: Credentials,
-    @inject(RestBindings.Http.RESPONSE) response: Response,
+    @param.path.string('tenantId') tenantId: string,
   ) {
     let userCredentials;
     try {
@@ -100,7 +105,7 @@ export class UserLoginController {
         email: credentials.email,
         username: credentials.email,
         name: credentials.name,
-        tenantId: credentials.tenantId
+        tenantId: tenantId
       });
       userCredentials = await this.userCredentialsRepository.create({
         id: credentials.email,
@@ -128,24 +133,29 @@ export class UserLoginController {
     credentials: Credentials,
     @inject(SecurityBindings.USER) user: UserProfile,
     @inject(RestBindings.Http.REQUEST) request: RequestWithSession,
-    @inject(RestBindings.Http.RESPONSE) response: Response,
+    @param.path.string('tenantId') tenantId: string,
   ) {
+
+    this.loggerService.logger.info('IN LoginController.login method');
+    if (tenantId !== user.tenantId) {
+      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
+    }
+
     const profile = {
       ...user.profile,
     };
     request.session.user = profile;
-    // response.redirect('/auth/account');
-    // return response;
-    // console.log(profile);
-    // return profile;
-    console.log('USER: >> ', profile);
+    delete profile.credentials;
+    // this.loggerService.logger.info('USER: >> ', profile);
     const token = await this.jwtService.generateToken(profile);
-    return token;
+    profile.verificationToken = token;
+    return profile;
   }
 
   @get('/keys')
   async fetchAuthKeys(
-    @inject(TokenServiceBindings.JWT_PUBLIC_KEY) jwtPublicKey: string
+    @inject(TokenServiceBindings.JWT_PUBLIC_KEY) jwtPublicKey: string,
+    @param.path.string('tenantId') tenantId: string,
   ): Promise<string> {
     const decodeKey = jwtPublicKey.replace(/\\n/gm, '\n');
     return Promise.resolve(decodeKey);
@@ -155,8 +165,11 @@ export class UserLoginController {
   @get('/whoAmI', {
     responses: USER_PROFILE_RESPONSE,
   })
-  whoAmI(@inject(SecurityBindings.USER) user: UserProfile): object {
-    console.log('IN AccountsController.whoAmI: >> ');
+  whoAmI(
+    @inject(SecurityBindings.USER) user: UserProfile,
+    @param.path.string('tenantId') tenantId: string,
+  ): object {
+    this.loggerService.logger.info('IN LoginController.whoAmI: >> ');
     return {
       user: user.profile,
       headers: Object.assign({}, this.req.headers),
@@ -167,8 +180,11 @@ export class UserLoginController {
   @get('/basic', {
     responses: USER_PROFILE_RESPONSE,
   })
-  myInfoUsingBasicAuth(@inject(SecurityBindings.USER) user: UserProfile): object {
-    console.log('IN AccountsController.myInfoUsingBasicAuth: >> ');
+  myInfoUsingBasicAuth(
+    @inject(SecurityBindings.USER) user: UserProfile,
+    @param.path.string('tenantId') tenantId: string,
+  ): object {
+    this.loggerService.logger.info('IN LoginController.myInfoUsingBasicAuth: >> ');
     return {
       user: user.profile,
       headers: Object.assign({}, this.req.headers),
@@ -179,15 +195,22 @@ export class UserLoginController {
   @get('/me', {
     responses: USER_PROFILE_RESPONSE,
   })
-  async myInfoUsingToken(@inject(SecurityBindings.USER) user: UserProfile): Promise<UserProfile> {
-    console.log('IN AccountsController.myInfoUsingToken: >> ', user);
+  async myInfoUsingToken(
+    @inject(SecurityBindings.USER) user: UserProfile,
+    @param.path.string('tenantId') tenantId: string,
+  ): Promise<UserProfile> {
+    this.loggerService.logger.info('IN LoginController.myInfoUsingToken: >> ');
+    if (tenantId !== user.tenantId) {
+      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
+    }
+
     const userDetails = await this.userService.findById(
       user[securityId],
       {
         include: ['profiles'],
       },
     );
-    // console.log('userDetails: >> ', userDetails);
+
     return Promise.resolve(userDetails);
   }
 
@@ -195,14 +218,18 @@ export class UserLoginController {
   @get('/profiles')
   async getExternalProfiles(
     @inject(SecurityBindings.USER) profile: UserProfile,
+    @param.path.string('tenantId') tenantId: string,
   ): Promise<UserProfile> {
+    if (tenantId !== profile.tenantId) {
+      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
+    }
     const user = await this.userService.findById(
       profile[securityId],
       {
         include: ['profiles'],
       },
     );
-    // console.log('USER: >> ', user);
+    // this.loggerService.logger.info('USER: >> ', user);
     return Promise.resolve(user.profiles);
   }
 
@@ -221,8 +248,12 @@ export class UserLoginController {
   @get('/{accountId}/exchange')
   async exchangeToken(
     @inject(SecurityBindings.USER) user: UserProfile,
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('accountId') accountId: string,
   ): Promise<string> {
+    if (tenantId !== user.tenantId) {
+      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
+    }
     user.accountId = accountId;
     const newToken = this.jwtService.generateToken(user);
     return Promise.resolve(newToken);

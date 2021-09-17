@@ -7,6 +7,7 @@ import {BindingKey} from '@loopback/core';
 import {Profile as PassportProfile} from 'passport';
 import {Credentials, User} from '../models';
 import {PasswordHasher} from './hash.password';
+import {LoggerService} from './logger.service';
 
 export namespace UserServiceBindings {
   export const PASSPORT_USER_IDENTITY_SERVICE = BindingKey.create<
@@ -14,7 +15,14 @@ export namespace UserServiceBindings {
   >('services.passport.identity');
 }
 
+export namespace LoggerBindings {
+  export const LOGGER = BindingKey.create<LoggerService>('services.logger');
+}
+
 export namespace TokenServiceBindings {
+  export const TENANT_ID = BindingKey.create<string | undefined>(
+    'tenantId',
+  );
   export const TOKEN_SECRET = BindingKey.create<string | undefined>(
     'authentication.jwt.secret',
   );

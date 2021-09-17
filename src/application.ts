@@ -11,6 +11,7 @@ import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
 
+
 export {ApplicationConfig};
 
 export class AuthApplication extends BootMixin(
@@ -31,6 +32,7 @@ export class AuthApplication extends BootMixin(
     });
     this.component(RestExplorerComponent);
     this.component(AuthenticationComponent);
+    // this.component(LoggingComponent);
     // this.component(CrudRestComponent);
 
     this.projectRoot = __dirname;

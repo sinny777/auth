@@ -3,6 +3,7 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {Entity, hasMany, hasOne, model, property} from '@loopback/repository';
+// import {v4 as uuid} from 'uuid';
 import {UserCredentials} from './user-credentials.model';
 import {UserIdentity} from './user-identity.model';
 
@@ -11,7 +12,7 @@ export class User extends Entity {
   @property({
     type: 'string',
     id: true,
-    defaultFn: "uuidv4"
+    defaultFn: 'uuidv4',
   })
   id: string;
 

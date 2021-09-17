@@ -33,9 +33,9 @@ app.set('view engine', 'jade');
 // to support json payload in body
 app.use(bodyParser.json());
 // to support html form bodies
-app.use(bodyParser.text({type: 'text/html'}));
+app.use(bodyParser.text({ type: 'text/html' }));
 // create application/x-www-form-urlencoded parser
-const urlencodedParser = bodyParser.urlencoded({extended: false});
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 /**
  * we use 'client-sessions' to enable saving client side sessions
@@ -79,7 +79,7 @@ function requireLogin(req, res, next) {
  * Render Index page
  */
 app.get('/', function (req, res, next) {
-  res.render('pages/index', {user: req.user, url: req.url});
+  res.render('pages/index', { user: req.user, url: req.url });
 });
 
 /**
@@ -134,7 +134,7 @@ app.get('/signup', function (req, res, next) {
  * submit signup request
  */
 app.post('/users/signup', urlencodedParser, function (req, res, next) {
-  req.url = '/api/signup';
+  req.url = '/api/ibm/auth/signup';
   req.headers['accept'] = 'text/json';
   res.on('User Exists', msg => {
     res.status(401);
@@ -142,7 +142,7 @@ app.post('/users/signup', urlencodedParser, function (req, res, next) {
      * Sign Up events (like 'User Exists') are captured and redirected to the login page with error message.
      * This helps focusing rendering concerns only in the express app. No need to add 'Jade' dependency to LB App.
      */
-    res.write(loginTemplate({messages: msg}));
+    res.write(loginTemplate({ messages: msg }));
     res.end();
   });
   req.app.handle(req, res, next);
@@ -152,7 +152,7 @@ app.post('/users/signup', urlencodedParser, function (req, res, next) {
  * login submit
  */
 app.post('/login_submit', urlencodedParser, function (req, res, next) {
-  req.url = '/api/login';
+  req.url = '/api/ibm/auth/login';
   req.headers['accept'] = 'text/json';
   res.on('UnauthorizedError', msg => {
     res.status(401);
@@ -160,7 +160,7 @@ app.post('/login_submit', urlencodedParser, function (req, res, next) {
      * authentication failures are captured and redirected to the login page with error message.
      * This helps focusing rendering concerns only in the express app. No need to add 'Jade' dependency to LB App.
      */
-    res.write(loginTemplate({messages: msg}));
+    res.write(loginTemplate({ messages: msg }));
     res.end();
   });
   req.app.handle(req, res, next);
