@@ -7,18 +7,37 @@ import shortUUID from 'short-uuid';
 import {Role} from './role.model';
 import {AccountType} from './types';
 
-@model()
+@model({
+  settings: {
+    indexes: {
+      name: {
+        keys: {
+          name: 1,
+        },
+        options: {
+          unique: true,
+        },
+      },
+    },
+  },
+})
 export class Account extends Entity {
   @property({
     type: 'string',
     id: true,
     default: () => shortUUID().new(),
   })
-  id: string;
+  id?: string;
 
   @property({
     type: 'string',
-    required: true,
+    default: process.env.TENANT_ID || 'ibm'
+  })
+  tenantId?: string;
+
+  @property({
+    type: 'string',
+    required: false,
     jsonSchema: {
       enum: Object.values(AccountType),
     },
@@ -31,12 +50,6 @@ export class Account extends Entity {
     required: true,
   })
   name: string;
-
-  @property({
-    type: 'string',
-    required: true
-  })
-  tenantId?: string;
 
   @hasMany(() => Role)
   roles?: Role[];

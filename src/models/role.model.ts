@@ -16,12 +16,6 @@ export class Role extends Entity {
 
   @property({
     type: 'string',
-    required: true
-  })
-  tenantId?: string;
-
-  @property({
-    type: 'string',
     required: true,
   })
   name: string;

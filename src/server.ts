@@ -4,6 +4,7 @@
 
 import {ApplicationConfig} from '@loopback/core';
 import {RestExplorerBindings} from '@loopback/rest-explorer';
+import * as dotenv from "dotenv";
 import {once} from 'events';
 import express from 'express';
 import http from 'http';
@@ -31,6 +32,12 @@ export class ExpressServer {
   public url: String;
 
   constructor(options: ApplicationConfig = {}) {
+
+    dotenv.config();
+    let env_path = process.env.NODE_ENV;
+    if (env_path) {
+      dotenv.config({path: env_path});
+    }
 
     // Express Web App
     this.webApp = require('../web-application/express-app');

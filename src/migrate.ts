@@ -1,8 +1,17 @@
+import * as dotenv from "dotenv";
 import {AuthApplication} from './application';
 
 export async function migrate(args: string[]) {
+
+  dotenv.config();
+  let env_path = process.env.NODE_ENV;
+  if (env_path) {
+    dotenv.config({path: env_path});
+  }
+
   const existingSchema = args.includes('--rebuild') ? 'drop' : 'alter';
   console.log('Migrating schemas (%s existing schema)', existingSchema);
+  console.log(process.env.TENANT_ID);
 
   const app = new AuthApplication();
   await app.boot();

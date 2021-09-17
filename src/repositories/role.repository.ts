@@ -5,14 +5,14 @@
 import {inject} from '@loopback/core';
 import {DefaultCrudRepository} from '@loopback/repository';
 import {DbDataSource} from '../datasources';
-import {UserIdentity} from '../models';
+import {Role} from '../models';
 
-export class UserIdentityRepository extends DefaultCrudRepository<
-  UserIdentity,
-  typeof UserIdentity.prototype.id,
-  UserIdentity
+export class RoleRepository extends DefaultCrudRepository<
+  Role,
+  typeof Role.prototype.id,
+  Role
 > {
   constructor(@inject('datasources.pgdb') dataSource: DbDataSource) {
-    super(UserIdentity, dataSource);
+    super(Role, dataSource);
   }
 }

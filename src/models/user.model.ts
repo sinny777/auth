@@ -9,6 +9,7 @@ import {UserIdentity} from './user-identity.model';
 
 @model()
 export class User extends Entity {
+
   @property({
     type: 'string',
     id: true,
@@ -18,15 +19,15 @@ export class User extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    default: process.env.TENANT_ID || 'ibm'
   })
-  name: string;
+  tenantId: string;
 
   @property({
     type: 'string',
-    required: true
+    required: true,
   })
-  tenantId?: string;
+  name: string;
 
   // must keep it
   @property({
