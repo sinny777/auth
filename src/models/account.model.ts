@@ -31,6 +31,7 @@ export class Account extends Entity {
 
   @property({
     type: 'string',
+    index: true,
     default: process.env.TENANT_ID || 'ibm'
   })
   tenantId?: string;

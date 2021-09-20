@@ -105,7 +105,7 @@ export class AccountsService {
   }
 
   async deleteById(id: string): Promise<any> {
-    this.loggerService.logger.info('IN AccountsService.deleteById: >>>> %o', id);
+    this.loggerService.logger.info('IN AccountsService.deleteById, id: %o', id);
     if (!this.currentUserProfile) {
       throw new HttpErrors.Unauthorized(
         `Unauthorized Access...`,
@@ -116,8 +116,8 @@ export class AccountsService {
 
   }
 
-  async createRole(accountId: string, role: Role): Promise<Role> {
-    this.loggerService.logger.info('IN AccountsService.createRole: >>>> %o', role);
+  async addRole(accountId: string, role: Role): Promise<Role> {
+    this.loggerService.logger.info('IN AccountsService.createRole: %o', role);
     if (!this.currentUserProfile) {
       throw new HttpErrors.Unauthorized(
         `Unauthorized Access...`,
@@ -127,5 +127,43 @@ export class AccountsService {
     return this.accountRepository.roles(accountId).create(role);
 
   }
+
+  async findRole(accountId: string, filter?: Filter<Role>): Promise<any> {
+    this.loggerService.logger.info('IN AccountsService.findRole, filter: %o', filter);
+    if (!this.currentUserProfile) {
+      throw new HttpErrors.Unauthorized(
+        `Unauthorized Access...`,
+      );
+    }
+
+    return this.accountRepository.roles(accountId).find(filter);
+
+  }
+
+
+  async updateAllRoles(accountId: string, role: Role, where?: Where<Role>): Promise<any> {
+    this.loggerService.logger.info('IN AccountsService.updateAllRoles, where: %o', where);
+    if (!this.currentUserProfile) {
+      throw new HttpErrors.Unauthorized(
+        `Unauthorized Access...`,
+      );
+    }
+
+    return this.accountRepository.roles(accountId).patch(role, where);
+
+  }
+
+  async deleteRoles(accountId: string, where?: Where<Role>): Promise<any> {
+    this.loggerService.logger.info('IN AccountsService.deleteRoles, where: %o', where);
+    if (!this.currentUserProfile) {
+      throw new HttpErrors.Unauthorized(
+        `Unauthorized Access...`,
+      );
+    }
+
+    return this.accountRepository.roles(accountId).delete(where);
+
+  }
+
 
 }
