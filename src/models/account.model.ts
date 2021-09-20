@@ -39,6 +39,12 @@ export class Account extends Entity {
   @property({
     type: 'string',
     required: false,
+  })
+  parentId?: string;
+
+  @property({
+    type: 'string',
+    required: false,
     jsonSchema: {
       enum: Object.values(AccountType),
     },
