@@ -18,9 +18,10 @@ export async function serverConfig(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   oauth2Providers: any,
 ): Promise<ApplicationConfig> {
+  let PORT = process.env.PORT || 3000;
   const config = {
     rest: {
-      port: +(process.env.PORT ?? 3000),
+      port: PORT,
       host: process.env.HOST,
       protocol: 'http',
       gracePeriodForClose: 5000, // 5 seconds
@@ -29,7 +30,7 @@ export async function serverConfig(
       },
       requestBodyParser: {json: {limit: '2mb'}},
       // Use the LB4 application as a route. It should not be listening.
-      listenOnStart: false,
+      // listenOnStart: false,
     },
     googleOptions: oauth2Providers['google-login'],
     twitterOptions: oauth2Providers['twitter-login'],

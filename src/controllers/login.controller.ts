@@ -144,7 +144,7 @@ export class UserLoginController {
     const profile = {
       ...user.profile,
     };
-    request.session.user = profile;
+    // request.session.user = profile;
     delete profile.credentials;
     // this.loggerService.logger.info('USER: >> ', profile);
     const token = await this.jwtService.generateToken(profile);
