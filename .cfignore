@@ -1,0 +1,7 @@
+node_modules/
+.vscode/
+.git
+web-application/node_modules
+dist
+web-application/dist
+

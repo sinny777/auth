@@ -1,5 +1,25 @@
-# Check out https://hub.docker.com/_/node to select a new base image
-FROM node:16-slim
+##
+## Copyright 2021 IBM Corporation
+##
+## This will build SmartThings Auth container image
+## Author: Gurvinder Singh (gurvsin3@in.ibm.com)
+##
+## docker build -t sinny777/smartthings-auth:local .
+## docker run --rm -it -p 3000:3000 --name smartthings-auth --env-file .env sinny777/smartthings-auth:local
+##
+
+FROM node:12-slim
+# FROM registry.access.redhat.com/ubi8/nodejs-12
+
+LABEL org.label-schema.build-date=${BUILD_DATE} \
+    org.label-schema.license="Apache-2.0" \
+    org.label-schema.name="SmartthingsAuthService" \
+    org.label-schema.version=${BUILD_VERSION} \
+    org.label-schema.description="Smartthings Auth Microservice" \
+    org.label-schema.vcs-ref=${BUILD_REF} \
+    org.label-schema.vcs-type="Git" \
+    authors="Gurvinder Singh <sinny777@gmail.com>" \
+    profile="http://www.gurvinder.info"
 
 # Set to a non-root built-in user `node`
 USER node
@@ -9,18 +29,21 @@ RUN mkdir -p /home/node/app
 
 WORKDIR /home/node/app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
 COPY --chown=node package*.json ./
 
-RUN npm install
+RUN npm i @loopback/cli && \
+    npm ci
 
 # Bundle app source code
 COPY --chown=node . .
 
-RUN npm run build
+RUN npm run clean && \
+    npm run build
 
+# FROM node:12-slim
+# WORKDIR /usr/src/app
+# COPY --from=BUILD /usr/src/app/node_modules ./node_modules/
+# COPY --from=BUILD /usr/src/app/dist ./dist/
 # Bind to all network interfaces so that it can be mapped to the host OS
 ENV HOST=0.0.0.0 PORT=3000
 

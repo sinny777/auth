@@ -17,6 +17,9 @@ openssl rsa -in "$PRIVATE_PEM" -pubout -outform DER | base64 > "$PUBLIC_TXT"
 
 # awk -v ORS='\\n' '1' secrets/public.pem | pbcopy
 # awk -v ORS='\\n' '1' src/config/keys/secrets/public.pem | pbcopy
+# awk -v ORS='\\n' '1' src/config/keys/secrets/hyper-dbaas-postgres.pem |  pbcopy
+
+# openssl x509 -outform der -in src/config/keys/secrets/hyper-dbaas-postgres.pem -out src/config/keys/secrets/hyper-dbaas-postgres.crt
 
 rm "$PRIVATE_PEM".pub
 
