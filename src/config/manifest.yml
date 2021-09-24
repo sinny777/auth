@@ -1,0 +1,6 @@
+---
+applications:
+- name:      smartthings-auth
+  host:      smartthings-auth
+  memory:    128M
+  buildpack: staticfile_buildpack

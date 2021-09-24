@@ -35,7 +35,7 @@
     "prestart": "npm run build",
     "start": "node -r source-map-support/register .",
     "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
-    "rebuild": "npm run clean && npm run build"
+    "rebuild": "npm run clean && npm run build cp src/config/manifest.yml src/config/Staticfile dist"
   },
   "repository": {
     "type": "git",
