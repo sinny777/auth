@@ -1,4 +1,4 @@
-applications:
+apps:
 - name: smartthings-auth
   buildpacks:
     - nodejs_buildpack

@@ -32,7 +32,7 @@
     "migrate": "node ./dist/migrate --rebuild",
     "preopenapi-spec": "npm run build",
     "openapi-spec": "node ./dist/openapi-spec",
-    "prestart": "npm run rebuild",
+    "prestart": "npm run build",
     "start": "node -r source-map-support/register .",
     "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
     "rebuild": "npm run clean && npm run build"
@@ -56,7 +56,6 @@
     "@loopback/authentication": "^7.3.2",
     "@loopback/authentication-passport": "^3.2.2",
     "@loopback/boot": "^3.4.2",
-    "@loopback/cli": "^2.22.0",
     "@loopback/core": "^2.16.2",
     "@loopback/logging": "^0.6.3",
     "@loopback/mock-oauth2-provider": "^0.3.2",
