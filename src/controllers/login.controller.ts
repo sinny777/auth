@@ -19,7 +19,7 @@ import {
   SchemaObject
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
-import {Credentials} from '../models';
+import {Credentials, RefreshTokenReq} from '../models';
 import {UserRepository} from '../repositories';
 import {UserCredentialsRepository} from '../repositories/user-credentials.repository';
 import {UserIdentityRepository} from '../repositories/user-identity.repository';
@@ -42,13 +42,29 @@ const CredentialsSchema: SchemaObject = {
   },
 };
 
+const RefreshTokenSchema: SchemaObject = {
+  type: 'object',
+  required: ['tenantId', 'userId', 'token'],
+  properties: {
+    tenantId: {
+      type: 'string',
+    },
+    userId: {
+      type: 'string',
+    },
+    refreshToken: {
+      type: 'string',
+    },
+  },
+};
+
 const USER_PROFILE_RESPONSE: RequestBodyObject = {
-  description: 'Session user profile',
+  description: 'User profile',
   content: {
     'application/json': {
       schema: {
         type: 'object',
-        title: 'sessionUserProfile',
+        title: 'userProfile',
         properties: {
           user: {type: 'object'},
         },
@@ -132,7 +148,6 @@ export class UserLoginController {
     })
     credentials: Credentials,
     @inject(SecurityBindings.USER) user: UserProfile,
-    @inject(RestBindings.Http.REQUEST) request: RequestWithSession,
     @param.path.string('tenantId') tenantId: string,
   ) {
 
@@ -148,8 +163,47 @@ export class UserLoginController {
     delete profile.credentials;
     // this.loggerService.logger.info('USER: >> ', profile);
     const token = await this.jwtService.generateToken(profile);
-    profile.verificationToken = token;
-    return profile;
+    const refreshToken = await this.jwtService.generateRefreshToken(profile);
+    const tokensData = {
+      user: profile,
+      token: token,
+      refreshToken: refreshToken
+    }
+    // profile.verificationToken = token;
+    return tokensData;
+  }
+
+  @post('/token/refresh')
+  async refreshToken(
+    @requestBody({
+      description: 'Refresh Token',
+      required: true,
+      content: {
+        'application/json': {schema: RefreshTokenSchema},
+      },
+    })
+    refreshTokenReq: RefreshTokenReq,
+    @param.path.string('tenantId') tenantId: string,
+  ) {
+
+    this.loggerService.logger.info('IN LoginController.refreshToken method');
+    if (tenantId !== refreshTokenReq.tenantId) {
+      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
+    }
+    const userProfile: UserProfile = await this.jwtService.verifyToken(refreshTokenReq.refreshToken);
+    if(userProfile){
+      const token = await this.jwtService.generateToken(userProfile);
+      const refreshToken = await this.jwtService.generateRefreshToken(userProfile);
+      const tokensData = {
+        user: userProfile,
+        token: token,
+        refreshToken: refreshToken
+      }
+      return tokensData;
+    }else{
+      throw new HttpErrors.Unauthorized('Token Expired: >> ');
+    }
+    
   }
 
   @get('/keys')
@@ -159,21 +213,6 @@ export class UserLoginController {
   ): Promise<string> {
     const decodeKey = jwtPublicKey.replace(/\\n/gm, '\n');
     return Promise.resolve(decodeKey);
-  }
-
-  @authenticate('session')
-  @get('/whoAmI', {
-    responses: USER_PROFILE_RESPONSE,
-  })
-  whoAmI(
-    @inject(SecurityBindings.USER) user: UserProfile,
-    @param.path.string('tenantId') tenantId: string,
-  ): object {
-    this.loggerService.logger.info('IN LoginController.whoAmI: >> ');
-    return {
-      user: user.profile,
-      headers: Object.assign({}, this.req.headers),
-    };
   }
 
   @authenticate('basic')
@@ -236,7 +275,7 @@ export class UserLoginController {
   /**
    * TODO: enable roles and authorization, add admin role authorization to this endpoint
    */
-  @authenticate('basic')
+  @authenticate('jwt')
   @del('/clear')
   async clear() {
     await this.userCredentialsRepository.deleteAll();

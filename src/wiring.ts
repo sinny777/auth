@@ -113,11 +113,13 @@ export function setupBindings(app: Application) {
   app.bind(PasswordHasherBindings.ROUNDS).to(10)
   // app.bind(UserServiceBindings.USER_SERVICE).toClass(MyUserService);
   app.bind(TokenServiceBindings.TOKEN_SERVICE).toClass(JWTService);
+  app.bind(TokenServiceBindings.REFRESH_TOKEN_SERVICE).toClass(JWTService);
   app.bind(TokenServiceBindings.TOKEN_SECRET).to(process.env.TOKEN_SECRET);
   app.bind(TokenServiceBindings.TOKEN_ISSUER).to(process.env.TOKEN_ISSUER);
   app.bind(TokenServiceBindings.TOKEN_AUDIENCE).to(process.env.TOKEN_AUDIENCE);
   app.bind(TokenServiceBindings.TOKEN_ALGORITHM).to(process.env.TOKEN_ALGORITHM);
   app.bind(TokenServiceBindings.TOKEN_EXPIRES_IN).to(process.env.TOKEN_EXPIRES_IN);
+  app.bind(TokenServiceBindings.REFRESH_TOKEN_EXPIRES_IN).to(process.env.REFRESH_TOKEN_EXPIRES_IN);
   app.bind(TokenServiceBindings.JWT_PRIVATE_KEY).to(process.env.JWT_PRIVATE_KEY);
   app.bind(TokenServiceBindings.JWT_PUBLIC_KEY).to(process.env.JWT_PUBLIC_KEY);
 

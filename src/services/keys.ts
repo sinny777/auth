@@ -8,6 +8,7 @@ import {Profile as PassportProfile} from 'passport';
 import {Credentials, User} from '../models';
 import {PasswordHasher} from './hash.password';
 import {LoggerService} from './logger.service';
+import { TokenServiceI } from './types';
 
 export namespace UserServiceBindings {
   export const PASSPORT_USER_IDENTITY_SERVICE = BindingKey.create<
@@ -44,8 +45,14 @@ export namespace TokenServiceBindings {
   export const TOKEN_EXPIRES_IN = BindingKey.create<string | undefined>(
     'authentication.jwt.expiresIn',
   );
+  export const REFRESH_TOKEN_EXPIRES_IN = BindingKey.create<string | undefined>(
+    'authentication.jwt.refreshExpiresIn',
+  );
   export const TOKEN_SERVICE = BindingKey.create<TokenService>(
     'services.jwt.service',
+  );
+  export const REFRESH_TOKEN_SERVICE = BindingKey.create<TokenServiceI>(
+    'services.jwt.refreshService',
   );
 }
 

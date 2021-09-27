@@ -1,15 +1,18 @@
+import { TokenService } from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {HttpErrors} from '@loopback/rest';
 import {securityId, UserProfile} from '@loopback/security';
 import {promisify} from 'util';
+import { Tokens } from '../models';
 import {LoggerBindings, TokenServiceBindings} from './keys';
 import {LoggerService} from './logger.service';
+import { TokenServiceI } from './types';
 const jwt = require('jsonwebtoken');
 const signAsync = promisify(jwt.sign);
 const verifyAsync = promisify(jwt.verify);
 
 
-export class JWTService {
+export class JWTService implements TokenService, TokenServiceI {
 
   @inject(LoggerBindings.LOGGER)
   private loggerService: LoggerService;
@@ -25,6 +28,8 @@ export class JWTService {
     private jwtAlgorithm: string,
     @inject(TokenServiceBindings.TOKEN_EXPIRES_IN)
     private jwtExpiresIn: string,
+    @inject(TokenServiceBindings.REFRESH_TOKEN_EXPIRES_IN)
+    private refreshExpiresIn: string,
     @inject(TokenServiceBindings.JWT_PRIVATE_KEY)
     private jwtPrivateKey: string,
     @inject(TokenServiceBindings.JWT_PUBLIC_KEY)
@@ -40,7 +45,7 @@ export class JWTService {
         'Error while generating token :userProfile is null'
       )
     }
-    let token = '';
+    
     try {
       // this.loggerService.logger.info('userProfile for JWT token: >> ', userProfile);
       let signOptions = {
@@ -55,8 +60,43 @@ export class JWTService {
       // const secret = fs.readFileSync(filePath, 'utf8');
       const privateKey = this.jwtPrivateKey ? this.jwtPrivateKey : this.tokenSecret;
       const secret = privateKey.replace(/\\n/gm, '\n');
-      token = await signAsync(userProfile, secret, signOptions);
+      const token = await signAsync(userProfile, secret, signOptions);
       return token;
+    } catch (err) {
+      throw new HttpErrors.Unauthorized(
+        `error generating token ${err}`
+      )
+    }
+  }
+
+  async generateRefreshToken(userProfile: UserProfile): Promise<string> {
+    if (!userProfile) {
+      throw new HttpErrors.Unauthorized(
+        'Error while generating token :userProfile is null'
+      )
+    }
+    
+    try {
+      // this.loggerService.logger.info('userProfile for JWT token: >> ', userProfile);
+      let signOptions = {
+        issuer: this.jwtIssuer,
+        // subject: this.jwtAudience,
+        audience: this.jwtAudience,
+        expiresIn: this.refreshExpiresIn,
+        algorithm: this.jwtAlgorithm
+      };
+      // const filePath = path.join(__dirname, '../../src/config//keys/smarthings-auth-keys/private.pem');
+      // this.loggerService.logger.info('filePath: >> ', filePath);
+      // const secret = fs.readFileSync(filePath, 'utf8');
+      const privateKey = this.jwtPrivateKey ? this.jwtPrivateKey : this.tokenSecret;
+      const secret = privateKey.replace(/\\n/gm, '\n');
+      const refreshToken = await signAsync(userProfile, secret, signOptions);
+      // const tokensData = {
+      //   user: userProfile,
+      //   token: token,
+      //   refreshToken: refreshToken
+      // }
+      return refreshToken;
     } catch (err) {
       throw new HttpErrors.Unauthorized(
         `error generating token ${err}`
