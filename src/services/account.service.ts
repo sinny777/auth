@@ -28,7 +28,10 @@ export class AccountsService {
       );
     }
 
-    return this.accountRepository.create(account);
+    const createdAccount: Account = await this.accountRepository.create(account);
+    const createdRoles: Role[] = await this.addDefaultRoles(createdAccount.getId());
+
+    return createdAccount;
 
   }
 
@@ -128,6 +131,23 @@ export class AccountsService {
 
   }
 
+  async addRoles(accountId: string, roles: Role[]): Promise<Role[]> {
+    this.loggerService.logger.info('IN AccountsService.createRoles: %o', roles);
+    if (!this.currentUserProfile) {
+      throw new HttpErrors.Unauthorized(
+        `Unauthorized Access...`,
+      );
+    }
+
+    let createdRoles: Role[] = [];
+    roles.forEach(async role => {
+      role.accountId = accountId;
+      createdRoles.push(await this.accountRepository.roles(accountId).create(role));
+    });
+    return createdRoles;
+
+  }
+
   async findRole(accountId: string, filter?: Filter<Role>): Promise<any> {
     this.loggerService.logger.info('IN AccountsService.findRole, filter: %o', filter);
     if (!this.currentUserProfile) {
@@ -163,6 +183,22 @@ export class AccountsService {
 
     return this.accountRepository.roles(accountId).delete(where);
 
+  }
+
+  private async addDefaultRoles(accountId: string): Promise<Role[]>{
+    const defaultRoles: any[] = [
+      {
+        "name": "admin"
+      },
+      {
+        "name": "member"
+      },
+      {
+        "name": "guest"
+      }
+    ]
+
+    return this.addRoles(accountId, defaultRoles);
   }
 
 
