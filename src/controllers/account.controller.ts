@@ -13,7 +13,7 @@ import {
   response,
   ResponseObject
 } from '@loopback/rest';
-import {Account, Role} from '../models';
+import {Account, Role, User} from '../models';
 import {LoggerBindings} from '../services';
 import {AccountsService} from '../services/account.service';
 import {LoggerService} from '../services/logger.service';
@@ -277,6 +277,18 @@ export class AccountController {
     @param.where(Role) where?: Where<Role>,
   ): Promise<Count> {
     return this.accountsService.deleteRoles(accountId, where);
+  }
+
+  @authenticate('jwt')
+  @post('/{accountId}/user/{userId}/role')
+  async assignRoleToUser(
+    @param.path.string('accountId') accountId: typeof Account.prototype.id,
+    @param.path.string('userId') userId: typeof User.prototype.id,
+    @requestBody() role: Role,
+  ): Promise<any> {
+
+    return this.accountsService.assignRoleToUser(userId, role.id);
+
   }
 
 }

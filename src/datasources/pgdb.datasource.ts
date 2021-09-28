@@ -48,7 +48,7 @@ export class DbDataSource extends juggler.DataSource
 
   constructor(
     @inject('datasources.config.pgdb', {optional: true})
-    dsConfig: object = config,
+    dsConfig: any = config,
   ) {
 
     const privateKey = process.env.DB_SSL_CA || '';
@@ -63,16 +63,21 @@ export class DbDataSource extends juggler.DataSource
       user: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      'debug': true,
-      ssl: {
+      'debug': true
+    };
+
+    if(privateKey && privateKey.length > 5){
+      console.log(privateKey);
+      dsConfig['ssl'] = 
+      {
         sslmode: 'verify-all',
         rejectUnauthorized: true,
         // ca: fs.readFileSync(`./src/config/keys/secrets/hyper-dbaas-postgres.pem`).toString(),
         ca: sslCA
       }
-    };
+    }
 
-    console.log('dsConfig: >> ', dsConfig);
+    // console.log('dsConfig: >> ', dsConfig);
 
     super(dsConfig);
   }

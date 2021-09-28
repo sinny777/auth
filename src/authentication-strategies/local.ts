@@ -78,7 +78,7 @@ export class LocalAuthStrategy implements AuthenticationStrategy {
         where: {
           email: username,
         },
-        include: ['profiles', 'credentials'],
+        include: ['profiles', 'credentials', 'roles'],
       })
       .then((users: User[]) => {
         const AUTH_FAILED_MESSAGE = 'User Name / Password not matching';

@@ -3,6 +3,7 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {Entity, hasMany, hasOne, model, property} from '@loopback/repository';
+import { AccessType, Role, RoleWithRelations, UserRole } from '.';
 // import {v4 as uuid} from 'uuid';
 import {UserCredentials} from './user-credentials.model';
 import {UserIdentity} from './user-identity.model';
@@ -25,9 +26,28 @@ export class User extends Entity {
 
   @property({
     type: 'string',
+  })
+  defaultAccountId: string;
+
+  @property({
+    type: 'string',
+    jsonSchema: {
+      enum: Object.values(AccessType),
+    },
+    default: AccessType.online
+  })
+  accessType: AccessType | AccessType.online;
+
+  @property({
+    type: 'string',
     required: true,
   })
-  name: string;
+  firstName: string;
+
+  @property({
+    type: 'string'
+  })
+  lastName: string;
 
   // must keep it
   @property({
@@ -49,16 +69,22 @@ export class User extends Entity {
   })
   emailVerified?: boolean;
 
-  @property({
-    type: 'string',
-  })
-  verificationToken?: string;
-
   @hasOne(() => UserCredentials)
   credentials?: UserCredentials;
 
   @hasMany(() => UserIdentity)
   profiles?: UserIdentity[];
+
+  @hasMany(() => Role, 
+    {
+      through: 
+      {
+        model: () => UserRole,
+        keyFrom: 'userId',
+        keyTo: 'roleId',
+      }
+    })
+  roles?: Role[];
 
   constructor(data?: Partial<User>) {
     super(data);
@@ -66,7 +92,10 @@ export class User extends Entity {
 }
 
 export interface UserRelations {
-  // describe navigational properties here
+  profiles: UserIdentity;
+  credentials: UserCredentials;
+  roles: RoleWithRelations;
+  
 }
 
 export type UserWithRelations = User & UserRelations;

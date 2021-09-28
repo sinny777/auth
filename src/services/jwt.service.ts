@@ -85,17 +85,10 @@ export class JWTService implements TokenService, TokenServiceI {
         expiresIn: this.refreshExpiresIn,
         algorithm: this.jwtAlgorithm
       };
-      // const filePath = path.join(__dirname, '../../src/config//keys/smarthings-auth-keys/private.pem');
-      // this.loggerService.logger.info('filePath: >> ', filePath);
-      // const secret = fs.readFileSync(filePath, 'utf8');
+     
       const privateKey = this.jwtPrivateKey ? this.jwtPrivateKey : this.tokenSecret;
       const secret = privateKey.replace(/\\n/gm, '\n');
       const refreshToken = await signAsync(userProfile, secret, signOptions);
-      // const tokensData = {
-      //   user: userProfile,
-      //   token: token,
-      //   refreshToken: refreshToken
-      // }
       return refreshToken;
     } catch (err) {
       throw new HttpErrors.Unauthorized(
@@ -131,10 +124,14 @@ export class JWTService implements TokenService, TokenServiceI {
           {[securityId]: decryptedToken.id, id: decryptedToken.id, name: decryptedToken.name, email: decryptedToken.email, tenantId: decryptedToken.tenantId}
         );
 
-        // this.loggerService.logger.info('accountId: >> ', decryptedToken['accountId']);
-        if (decryptedToken['accountId']) {
-          userProfile.accountId = decryptedToken['accountId'];
+        if (decryptedToken['roles']) {
+          userProfile.roles = decryptedToken['roles'];
         }
+
+        if (decryptedToken['defaultAccountId']) {
+          userProfile.defaultAccountId = decryptedToken['defaultAccountId'];
+        }
+
       } else {
         throw new HttpErrors.BadRequest("Invalid Tenant ");
       }

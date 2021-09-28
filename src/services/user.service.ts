@@ -3,13 +3,15 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {UserIdentityService} from '@loopback/authentication';
-import {inject} from '@loopback/core';
+import {inject, service} from '@loopback/core';
 import {Filter, repository, Where} from '@loopback/repository';
+import { UserProfile } from '@loopback/security';
 import {Profile as PassportProfile} from 'passport';
-import {LoggerBindings} from '.';
+import {JWTService, LoggerBindings, TokenServiceBindings} from '.';
 import {User} from '../models';
-import {UserRepository} from '../repositories';
+import {AccountRepository, UserRepository} from '../repositories';
 import {UserIdentityRepository} from '../repositories/user-identity.repository';
+import { AccountsService } from './account.service';
 import {LoggerService} from './logger.service';
 
 /**
@@ -27,6 +29,10 @@ export class PassportUserIdentityService
     public userRepository: UserRepository,
     @repository(UserIdentityRepository)
     public userIdentityRepository: UserIdentityRepository,
+    @repository(AccountRepository)
+    public accountRepository: AccountRepository,
+    @inject(TokenServiceBindings.TOKEN_SERVICE)
+    public jwtService: JWTService
   ) { }
 
   /**
@@ -50,19 +56,21 @@ export class PassportUserIdentityService
     });
     let user: User;
     if (!users || !users.length) {
-      const name = profile.name?.givenName
-        ? profile.name.givenName + ' ' + profile.name.familyName
+      const firstName = profile.name?.givenName
+        ? profile.name.givenName
         : profile.displayName;
+      const lastName = profile.name?.familyName
       user = await this.userRepository.create({
         email: email,
-        name: name || JSON.stringify(profile.name),
+        firstName: firstName || JSON.stringify(profile.name),
+        lastName: lastName,
         username: email,
       });
     } else {
       user = users[0];
     }
     user = await this.linkExternalProfile(user.id, profile);
-    return user;
+    return Promise.resolve(user);
   }
 
   /**
@@ -78,6 +86,7 @@ export class PassportUserIdentityService
     try {
       profile = await this.userIdentityRepository.findById(userIdentity.id);
     } catch (err) {
+      this.loggerService.logger.error(err);
       // no need to throw an error if entity is not found
       if (!(err.code === 'ENTITY_NOT_FOUND')) {
         throw err;
@@ -94,7 +103,7 @@ export class PassportUserIdentityService
         created: new Date(),
       });
     }
-    if (!userId) this.loggerService.logger.info('user id is empty');
+    if (!userId) this.loggerService.logger.debug('user id is empty');
     return this.userRepository.findById(userId, {
       include: ['profiles'],
     });
@@ -122,32 +131,65 @@ export class PassportUserIdentityService
   }
 
   async find(filter?: Filter<User>): Promise<any> {
-    this.loggerService.logger.info('IN UserService.find: >>>> %o', filter);
+    this.loggerService.logger.debug('IN UserService.find: >>>> %o', filter);
     return this.userRepository.find(filter);
   }
 
   async updateAll(user: User, where?: Where<User>): Promise<any> {
-    this.loggerService.logger.info('IN UserService.updateAll: >>>> %o', user);
+    this.loggerService.logger.debug('IN UserService.updateAll: >>>> %o', user);
     return this.userRepository.updateAll(user, where);
   }
 
   async findById(id: string, filter?: Filter<User>): Promise<any> {
-    this.loggerService.logger.info('IN UserService.findById: >>>> %o %o %o', id, ', filter: ', filter);
+    this.loggerService.logger.debug('IN UserService.findById: >>>> %o %o %o', id, ', filter: ', filter);
     return this.userRepository.findById(id, filter);
   }
 
   async updateById(id: string, user: User): Promise<any> {
-    this.loggerService.logger.info('IN UserService.updateById: >>>> ', id, ', user: ', user);
+    this.loggerService.logger.debug('IN UserService.updateById: >>>> ', id, ', user: ', user);
     return this.userRepository.updateById(id, user);
   }
 
   async replaceById(id: string, user: User): Promise<any> {
-    this.loggerService.logger.info('IN UserService.replaceById: >>>> ', id, ', user: ', user);
+    this.loggerService.logger.debug('IN UserService.replaceById: >>>> ', id, ', user: ', user);
     return this.userRepository.replaceById(id, user);
   }
 
   async deleteById(id: string): Promise<any> {
-    this.loggerService.logger.info('IN UserService.deleteById: >>>> ', id);
+    this.loggerService.logger.debug('IN UserService.deleteById: >>>> ', id);
     return this.userRepository.deleteById(id);
   }
+
+  async findUserAccounts(userId: string): Promise<any> {
+    this.loggerService.logger.debug('IN UserService.findUserAccounts: >>>> ', userId);
+    const userRoles = await this.userRepository.roles(userId).find();
+    let userAccountIds: string[] = [];
+    for (const role of userRoles) {
+      userAccountIds.push(role.accountId);
+    }
+
+    return this.accountRepository.find({
+      where: {
+        "id": {"inq": userAccountIds}
+      }
+    });
+
+  }
+
+  async refreshToken(userProfile: UserProfile, payload: any): Promise<any> {
+    this.loggerService.logger.debug('IN UserService.refreshToken: >>>> ', payload);
+    // this.jwtService.verifyToken
+    if(userProfile){
+      const token = await this.jwtService.generateToken(userProfile);
+      const refreshToken = await this.jwtService.generateRefreshToken(userProfile);
+      const tokensData = {
+        user: userProfile,
+        token: token,
+        refreshToken: refreshToken
+      }
+    return Promise.resolve(tokensData);
+  }
+
+  }
+
 }

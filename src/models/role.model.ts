@@ -2,11 +2,13 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {belongsTo, Entity, model, property} from '@loopback/repository';
+import {belongsTo, Entity, hasMany, model, property} from '@loopback/repository';
+import { User, UserRole } from '.';
 import {Account} from './account.model';
 
 @model()
 export class Role extends Entity {
+
   @property({
     type: 'number',
     id: true,

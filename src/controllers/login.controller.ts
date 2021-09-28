@@ -19,7 +19,7 @@ import {
   SchemaObject
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
-import {Credentials, RefreshTokenReq} from '../models';
+import {AccessType, Credentials, RefreshTokenReq} from '../models';
 import {UserRepository} from '../repositories';
 import {UserCredentialsRepository} from '../repositories/user-credentials.repository';
 import {UserIdentityRepository} from '../repositories/user-identity.repository';
@@ -111,7 +111,7 @@ export class UserLoginController {
       userCredentials = await this.userCredentialsRepository.findById(
         credentials.email,
       );
-    } catch (err) {
+    } catch (err: any) {
       if (err.code !== 'ENTITY_NOT_FOUND') {
         throw err;
       }
@@ -120,7 +120,9 @@ export class UserLoginController {
       const user = await this.userRepository.create({
         email: credentials.email,
         username: credentials.email,
-        name: credentials.name,
+        firstName: credentials.firstName,
+        lastName: credentials.lastName,
+        accessType: credentials.accessType || AccessType.online,
         tenantId: tenantId
       });
       userCredentials = await this.userCredentialsRepository.create({
@@ -151,7 +153,7 @@ export class UserLoginController {
     @param.path.string('tenantId') tenantId: string,
   ) {
 
-    this.loggerService.logger.info('IN LoginController.login method');
+    this.loggerService.logger.debug('IN LoginController.login method');
     if (tenantId !== user.tenantId) {
       throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
     }
@@ -161,7 +163,7 @@ export class UserLoginController {
     };
     // request.session.user = profile;
     delete profile.credentials;
-    // this.loggerService.logger.info('USER: >> ', profile);
+    // this.loggerService.logger.debug('USER: >> ', profile);
     const token = await this.jwtService.generateToken(profile);
     const refreshToken = await this.jwtService.generateRefreshToken(profile);
     const tokensData = {
@@ -171,39 +173,6 @@ export class UserLoginController {
     }
     // profile.verificationToken = token;
     return tokensData;
-  }
-
-  @post('/token/refresh')
-  async refreshToken(
-    @requestBody({
-      description: 'Refresh Token',
-      required: true,
-      content: {
-        'application/json': {schema: RefreshTokenSchema},
-      },
-    })
-    refreshTokenReq: RefreshTokenReq,
-    @param.path.string('tenantId') tenantId: string,
-  ) {
-
-    this.loggerService.logger.info('IN LoginController.refreshToken method');
-    if (tenantId !== refreshTokenReq.tenantId) {
-      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
-    }
-    const userProfile: UserProfile = await this.jwtService.verifyToken(refreshTokenReq.refreshToken);
-    if(userProfile){
-      const token = await this.jwtService.generateToken(userProfile);
-      const refreshToken = await this.jwtService.generateRefreshToken(userProfile);
-      const tokensData = {
-        user: userProfile,
-        token: token,
-        refreshToken: refreshToken
-      }
-      return tokensData;
-    }else{
-      throw new HttpErrors.Unauthorized('Token Expired: >> ');
-    }
-    
   }
 
   @get('/keys')
@@ -223,7 +192,7 @@ export class UserLoginController {
     @inject(SecurityBindings.USER) user: UserProfile,
     @param.path.string('tenantId') tenantId: string,
   ): object {
-    this.loggerService.logger.info('IN LoginController.myInfoUsingBasicAuth: >> ');
+    this.loggerService.logger.debug('IN LoginController.myInfoUsingBasicAuth: >> ');
     return {
       user: user.profile,
       headers: Object.assign({}, this.req.headers),
@@ -238,7 +207,7 @@ export class UserLoginController {
     @inject(SecurityBindings.USER) user: UserProfile,
     @param.path.string('tenantId') tenantId: string,
   ): Promise<UserProfile> {
-    this.loggerService.logger.info('IN LoginController.myInfoUsingToken: >> ');
+    this.loggerService.logger.debug('IN LoginController.myInfoUsingToken: >> ');
     if (tenantId !== user.tenantId) {
       throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
     }
@@ -246,7 +215,7 @@ export class UserLoginController {
     const userDetails = await this.userService.findById(
       user[securityId],
       {
-        include: ['profiles'],
+        include: ['profiles', 'roles'],
       },
     );
 
@@ -268,8 +237,24 @@ export class UserLoginController {
         include: ['profiles'],
       },
     );
-    // this.loggerService.logger.info('USER: >> ', user);
+    // this.loggerService.logger.debug('USER: >> ', user);
     return Promise.resolve(user.profiles);
+  }
+
+  @authenticate('jwt')
+  @get('/accounts')
+  async getMyAccounts(
+    @inject(SecurityBindings.USER) profile: UserProfile,
+    @param.path.string('tenantId') tenantId: string,
+  ): Promise<UserProfile> {
+    if (tenantId !== profile.tenantId) {
+      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
+    }
+    const accounts = await this.userService.findUserAccounts(
+      profile[securityId]
+    );
+    // this.loggerService.logger.debug('USER: >> ', user);
+    return Promise.resolve(accounts);
   }
 
   /**
@@ -283,19 +268,66 @@ export class UserLoginController {
     await this.userRepository.deleteAll();
   }
 
-  @authenticate('jwt')
-  @get('/{accountId}/exchange')
-  async exchangeToken(
-    @inject(SecurityBindings.USER) user: UserProfile,
+  @post('/token/refresh')
+  async refreshToken(
+    @requestBody({
+      description: 'Refresh Token',
+      required: true,
+      content: {
+        'application/json': {schema: RefreshTokenSchema},
+      },
+    })
+    refreshTokenReq: RefreshTokenReq,
     @param.path.string('tenantId') tenantId: string,
-    @param.path.string('accountId') accountId: string,
-  ): Promise<string> {
-    if (tenantId !== user.tenantId) {
+  ) {
+
+    this.loggerService.logger.debug('IN LoginController.refreshToken method');
+    if (tenantId !== refreshTokenReq.tenantId) {
       throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
     }
-    user.accountId = accountId;
-    const newToken = this.jwtService.generateToken(user);
-    return Promise.resolve(newToken);
+    let userProfile: UserProfile = await this.jwtService.verifyToken(refreshTokenReq.refreshToken);
+    if(userProfile){
+      if(refreshTokenReq['accountId']){
+
+      }
+
+
+      const token = await this.jwtService.generateToken(userProfile);
+      const refreshToken = await this.jwtService.generateRefreshToken(userProfile);
+      const tokensData = {
+        user: userProfile,
+        token: token,
+        refreshToken: refreshToken
+      }
+      return Promise.resolve(tokensData);
+    }else{
+      throw new HttpErrors.Unauthorized('Token Expired: >> ');
+    }
+    
+  }
+
+  @authenticate('jwt')
+  @post('/token/exchange')
+  async exchangeToken(
+    @inject(SecurityBindings.USER) userProfile: UserProfile,
+    @param.path.string('tenantId') tenantId: string
+  ): Promise<any> {
+    if (tenantId !== userProfile.tenantId) {
+      throw new HttpErrors.BadRequest('Invalid Tenant: >> ' + tenantId);
+    }
+   
+    if(userProfile){
+        const token = await this.jwtService.generateToken(userProfile);
+        const refreshToken = await this.jwtService.generateRefreshToken(userProfile);
+        const tokensData = {
+          user: userProfile,
+          token: token,
+          refreshToken: refreshToken
+        }
+      return Promise.resolve(tokensData);
+    }else{
+      Promise.reject("Invalid Details !");
+    }
   }
 
 

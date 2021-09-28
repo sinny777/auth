@@ -8,4 +8,4 @@ export * from './types';
 export * from './user-credentials.model';
 export * from './user-identity.model';
 export * from './user.model';
-
+export * from './user_role.model';

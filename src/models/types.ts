@@ -1,13 +1,16 @@
 import { UserProfile } from "@loopback/security";
 
 export type Credentials = {
+  accessType: AccessType;
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
 };
 
 export type RefreshTokenReq = {
   tenantId: string;
+  accountId: string;
   userId: string;
   refreshToken: string;
 };
@@ -24,5 +27,12 @@ export enum AccountType {
   DEPARTMENT = 'DEPARTMENT',
   DEFAULT = 'DEFAULT',
   GEO = 'GEO',
+  VIRTUAL = 'VIRTUAL',
+  GROUP = 'GROUP',
   OTHER = 'OTHER'
+}
+
+export enum AccessType {
+  online = 'online',
+  offline = 'offline'
 }
