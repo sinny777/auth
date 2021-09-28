@@ -210,6 +210,7 @@ export class AccountController {
   @authenticate('jwt')
   @post('/{accountId}/role')
   async addRole(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('accountId') accountId: typeof Account.prototype.id,
     @requestBody() role: Role,
   ): Promise<Role> {
