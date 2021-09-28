@@ -59,18 +59,21 @@ const RefreshTokenSchema: SchemaObject = {
 };
 
 const USER_PROFILE_RESPONSE: ResponseObject = {
-  description: 'User profile',
-  content: {
-    'application/json': {
-      schema: {
-        type: 'object',
-        title: 'userProfile',
-        properties: {
-          user: {type: 'object'},
+  '200': {
+    description: 'User profile',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          title: 'userProfile',
+          properties: {
+            user: { type: 'object' },
+          },
         },
       },
     },
   },
+  description: 'User profile'
 };
 
 @api({basePath: '/{tenantId}/auth/', paths: {}})
@@ -186,7 +189,22 @@ export class UserLoginController {
 
   @authenticate('basic')
   @get('/basic', {
-    responses: USER_PROFILE_RESPONSE,
+    responses: {
+      '200': {
+        description: 'User profile',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              title: 'userProfile',
+              properties: {
+                user: { type: 'object' },
+              },
+            },
+          },
+        },
+      }
+    },
   })
   myInfoUsingBasicAuth(
     @inject(SecurityBindings.USER) user: UserProfile,
@@ -201,7 +219,22 @@ export class UserLoginController {
 
   @authenticate('jwt')
   @get('/me', {
-    responses: USER_PROFILE_RESPONSE,
+    responses: {
+      '200': {
+        description: 'User profile',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              title: 'userProfile',
+              properties: {
+                user: { type: 'object' },
+              },
+            },
+          },
+        },
+      }
+    },
   })
   async myInfoUsingToken(
     @inject(SecurityBindings.USER) user: UserProfile,
