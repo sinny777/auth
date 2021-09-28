@@ -58,23 +58,23 @@ const RefreshTokenSchema: SchemaObject = {
   },
 };
 
-const USER_PROFILE_RESPONSE: ResponseObject = {
-  '200': {
-    description: 'User profile',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'object',
-          title: 'userProfile',
-          properties: {
-            user: { type: 'object' },
-          },
-        },
-      },
-    },
-  },
-  description: 'User profile'
-};
+// const USER_PROFILE_RESPONSE: ResponseObject = {
+//   '200': {
+//     description: 'User profile',
+//     content: {
+//       'application/json': {
+//         schema: {
+//           type: 'object',
+//           title: 'userProfile',
+//           properties: {
+//             user: { type: 'object' },
+//           },
+//         },
+//       },
+//     },
+//   },
+//   description: 'User profile'
+// };
 
 @api({basePath: '/{tenantId}/auth/', paths: {}})
 export class UserLoginController {
