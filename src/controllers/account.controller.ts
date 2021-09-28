@@ -85,6 +85,7 @@ export class AccountController {
     content: {'application/json': {schema: CountSchema}},
   })
   async count(
+    @param.path.string('tenantId') tenantId: string,
     @param.where(Account) where?: Where<Account>,
   ): Promise<Count> {
     return this.accountsService.count(where);
@@ -154,6 +155,7 @@ export class AccountController {
     },
   })
   async findById(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('id') id: string,
     @param.filter(Account, {exclude: 'where'}) filter?: FilterExcludingWhere<Account>
   ): Promise<Account> {
@@ -166,6 +168,7 @@ export class AccountController {
     description: 'Account PATCH success',
   })
   async updateById(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('id') id: string,
     @requestBody({
       content: {
@@ -185,6 +188,7 @@ export class AccountController {
     description: 'Account PUT success',
   })
   async replaceById(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('id') id: string,
     @requestBody() account: Account,
   ): Promise<void> {
@@ -196,7 +200,10 @@ export class AccountController {
   @response(204, {
     description: 'Account DELETE success',
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
+  async deleteById(
+    @param.path.string('tenantId') tenantId: string,
+    @param.path.string('id') id: string
+    ): Promise<void> {
     await this.accountsService.deleteById(id);
   }
 
@@ -234,6 +241,7 @@ export class AccountController {
     },
   })
   async findRole(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('accountId') accountId: typeof Account.prototype.id,
     @param.filter(Role) filter?: Filter<Role>,
   ): Promise<Account[]> {
@@ -251,6 +259,7 @@ export class AccountController {
     content: {'application/json': {schema: CountSchema}},
   })
   async updateAllRoles(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('accountId') accountId: string,
     @requestBody({
       content: {
@@ -273,6 +282,7 @@ export class AccountController {
     content: {'application/json': {schema: CountSchema}},
   })
   async deleteRoles(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('accountId') accountId: string,
     @param.where(Role) where?: Where<Role>,
   ): Promise<Count> {
@@ -282,6 +292,7 @@ export class AccountController {
   @authenticate('jwt')
   @post('/{accountId}/user/{userId}/role')
   async assignRoleToUser(
+    @param.path.string('tenantId') tenantId: string,
     @param.path.string('accountId') accountId: typeof Account.prototype.id,
     @param.path.string('userId') userId: typeof User.prototype.id,
     @requestBody() role: Role,

@@ -15,7 +15,7 @@ import {
   post, Request,
   requestBody,
   RequestBodyObject,
-  RequestWithSession, RestBindings,
+  RequestWithSession, ResponseObject, RestBindings,
   SchemaObject
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
@@ -58,7 +58,7 @@ const RefreshTokenSchema: SchemaObject = {
   },
 };
 
-const USER_PROFILE_RESPONSE: RequestBodyObject = {
+const USER_PROFILE_RESPONSE: ResponseObject = {
   description: 'User profile',
   content: {
     'application/json': {
@@ -262,7 +262,9 @@ export class UserLoginController {
    */
   @authenticate('jwt')
   @del('/clear')
-  async clear() {
+  async clear(
+    @param.path.string('tenantId') tenantId: string,
+  ) {
     await this.userCredentialsRepository.deleteAll();
     await this.userIdentityRepository.deleteAll();
     await this.userRepository.deleteAll();
