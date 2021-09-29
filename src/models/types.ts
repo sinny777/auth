@@ -3,6 +3,7 @@ import { UserProfile } from "@loopback/security";
 export type Credentials = {
   accessType: AccessType;
   username: string;
+  email: string;
   password: string;
   firstName: string;
   lastName: string;
