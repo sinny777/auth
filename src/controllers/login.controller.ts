@@ -29,9 +29,9 @@ import {LoggerService} from '../services/logger.service';
 
 const CredentialsSchema: SchemaObject = {
   type: 'object',
-  required: ['email', 'password'],
+  required: ['username', 'password'],
   properties: {
-    email: {
+    username: {
       type: 'string',
       format: 'email',
     },
@@ -112,7 +112,7 @@ export class UserLoginController {
     let userCredentials;
     try {
       userCredentials = await this.userCredentialsRepository.findById(
-        credentials.email,
+        credentials.username,
       );
     } catch (err: any) {
       if (err.code !== 'ENTITY_NOT_FOUND') {
@@ -121,22 +121,22 @@ export class UserLoginController {
     }
     if (!userCredentials) {
       const user = await this.userRepository.create({
-        email: credentials.email,
-        username: credentials.email,
+        email: credentials.username,
+        username: credentials.username,
         firstName: credentials.firstName,
         lastName: credentials.lastName,
         accessType: credentials.accessType || AccessType.online,
         tenantId: tenantId
       });
       userCredentials = await this.userCredentialsRepository.create({
-        id: credentials.email,
+        id: credentials.username,
         password: await this.hasher.hashPassword(credentials.password),
         userId: user.id,
       });
       return userCredentials;
     } else {
       throw new HttpErrors.BadRequest(
-        `User Exists, ${credentials.email} is already registered`,
+        `User Exists, ${credentials.username} is already registered`,
       );
     }
   }

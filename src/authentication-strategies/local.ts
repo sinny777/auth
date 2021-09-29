@@ -34,7 +34,7 @@ export class LocalAuthStrategy implements AuthenticationStrategy {
      */
     this.passportstrategy = new Strategy(
       {
-        usernameField: 'email',
+        usernameField: 'username',
         passwordField: 'password',
         session: false,
       },
