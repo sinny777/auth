@@ -1,16 +1,19 @@
 {
-  "name": "auth",
+  "name": "accounts",
   "version": "0.0.1",
   "description": "Authentication and Authorization",
   "keywords": [
-    "loopback-application",
-    "loopback"
+    "Smartthings",
+    "Authentication",
+    "Microservices",
+    "EdgeComputing",
+    "IoT"
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
     "node": ">=12.22.0",
-    "npm": "7.21.0"
+    "npm": ">=7.24.0"
   },
   "scripts": {
     "build": "lb-tsc",
