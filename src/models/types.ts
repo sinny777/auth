@@ -1,4 +1,4 @@
-import { UserProfile } from "@loopback/security";
+import { UserProfile } from "@loopback/security"; 
 
 export type Credentials = {
   accessType: AccessType;
